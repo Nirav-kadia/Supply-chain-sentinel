@@ -16,6 +16,7 @@ class GraphManager:
         )
 
     def create_extracted_entity(self, name, entity_type, source):
+        print("Creating extracted entity in graph database...------------------------------")
         query = """
         CREATE (:ExtractedEntity {
             name: $name,
@@ -64,14 +65,4 @@ class GraphManager:
             return [dict(record) for record in session.run(query, name=supplier_name)]
 
 
-#for testing purposes
-
-gm = GraphManager()
-gm.create_extracted_entity(
-    name="Thai Rubber Example Co., Ltd.",
-    entity_type="Supplier",
-    source="Reuters"
-)
-
-gm.resolve_entities("Supplier")
 
