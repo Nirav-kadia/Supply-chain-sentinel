@@ -29,10 +29,10 @@ jobs:
     #     docker tag supplychain-api:latest $ECR_URL:latest
     #     docker push $ECR_URL:latest
 
-    - name: Pulumi Up
-      uses: pulumi/actions@v4
-      with:
-        command: up
-        stack-name: dev
+    # - name: Pulumi Up
+    #   uses: pulumi/actions@v4
+    #   with:
+    #     command: up
+    #     stack-name: dev
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
