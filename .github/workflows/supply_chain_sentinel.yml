@@ -26,6 +26,8 @@ jobs:
         | docker login --username AWS --password-stdin $ECR_URL
 
     - name: Build & Push Docker
+      env:
+          ECR_URL: ${{ secrets.ECR_URL }}
       run: |
         docker build -t supplychain-api .
         docker tag supplychain-api:latest $ECR_URL:latest
