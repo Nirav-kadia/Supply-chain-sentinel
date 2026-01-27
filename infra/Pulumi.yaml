@@ -1,0 +1,11 @@
+name: supply-chain-sentinel-infra
+description: This is supply-chain-setinel-infra
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

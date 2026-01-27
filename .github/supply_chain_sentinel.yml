@@ -18,16 +18,16 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Login to ECR
-      run: |
-        aws ecr get-login-password \
-        | docker login --username AWS --password-stdin $ECR_URL
+    # - name: Login to ECR
+    #   run: |
+    #     aws ecr get-login-password \
+    #     | docker login --username AWS --password-stdin $ECR_URL
 
-    - name: Build & Push Docker
-      run: |
-        docker build -t supplychain-api .
-        docker tag supplychain-api:latest $ECR_URL:latest
-        docker push $ECR_URL:latest
+    # - name: Build & Push Docker
+    #   run: |
+    #     docker build -t supplychain-api .
+    #     docker tag supplychain-api:latest $ECR_URL:latest
+    #     docker push $ECR_URL:latest
 
     - name: Pulumi Up
       uses: pulumi/actions@v4
