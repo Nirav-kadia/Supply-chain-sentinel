@@ -30,7 +30,7 @@ jobs:
       env:
           ECR_URL: ${{ secrets.ECR_URL }}
       run: |
-        docker build -t supplychain-api .
+        docker build -f Dockerfile.simple -t supplychain-api .
         docker tag supplychain-api:latest $ECR_URL:latest
         docker push $ECR_URL:latest
 

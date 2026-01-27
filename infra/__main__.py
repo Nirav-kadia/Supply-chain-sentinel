@@ -34,6 +34,13 @@ aws.iam.RolePolicyAttachment(
     policy_arn="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 )
 
+# Create CloudWatch log group for ECS logs
+log_group = aws.cloudwatch.LogGroup(
+    "supplychain-logs",
+    name="/ecs/supplychain",
+    retention_in_days=7
+)
+
 task_definition = aws.ecs.TaskDefinition(
     "supplychain-task",
     family="supplychain",
@@ -50,17 +57,123 @@ task_definition = aws.ecs.TaskDefinition(
         "image": "{args[0]}:latest",
         "portMappings": [{{
             "containerPort": 8000
-        }}]
+        }}],
+        "environment": [
+            {{
+                "name": "NEO4J_URI",
+                "value": "neo4j+ssc://e549a456.databases.neo4j.io"
+            }},
+            {{
+                "name": "NEO4J_USER",
+                "value": "neo4j"
+            }},
+            {{
+                "name": "NEO4J_PASSWORD",
+                "value": "n66M978Cm1zU-vdSdXCC7AGtwOw2gS1wn2UZAvHYNcI"
+            }},
+            {{
+                "name": "GOOGLE_API_KEY",
+                "value": "AIzaSyBovrkeTtXOyMYlTOQoCn6RmjDH9DTiZQ8"
+            }}
+        ],
+        "logConfiguration": {{
+            "logDriver": "awslogs",
+            "options": {{
+                "awslogs-group": "/ecs/supplychain",
+                "awslogs-region": "us-east-1",
+                "awslogs-stream-prefix": "ecs"
+            }}
+        }}
     }}]
     """)
+)
+
+# Get default VPC
+default_vpc = aws.ec2.get_vpc(default=True)
+
+# Create security group for ALB
+alb_security_group = aws.ec2.SecurityGroup(
+    "alb-security-group",
+    description="Security group for Application Load Balancer",
+    vpc_id=default_vpc.id,
+    ingress=[
+        {
+            "protocol": "tcp",
+            "from_port": 80,
+            "to_port": 80,
+            "cidr_blocks": ["0.0.0.0/0"],
+            "description": "HTTP access from anywhere"
+        },
+        {
+            "protocol": "tcp",
+            "from_port": 443,
+            "to_port": 443,
+            "cidr_blocks": ["0.0.0.0/0"],
+            "description": "HTTPS access from anywhere"
+        }
+    ],
+    egress=[
+        {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": ["0.0.0.0/0"],
+            "description": "All outbound traffic"
+        }
+    ]
 )
 
 alb = aws.lb.LoadBalancer(
     "supplychain-alb",
     internal=False,
     load_balancer_type="application",
-    security_groups=[],
+    security_groups=[alb_security_group.id],
     subnets=aws.ec2.get_subnets().ids
+)
+
+# Create security group for ECS tasks
+ecs_security_group = aws.ec2.SecurityGroup(
+    "ecs-security-group",
+    description="Security group for ECS tasks",
+    vpc_id=default_vpc.id,
+    ingress=[
+        {
+            "protocol": "tcp",
+            "from_port": 8000,
+            "to_port": 8000,
+            "security_groups": [alb_security_group.id],
+            "description": "Allow traffic from ALB"
+        }
+    ],
+    egress=[
+        {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": ["0.0.0.0/0"],
+            "description": "All outbound traffic"
+        }
+    ]
+)
+
+# Create target group for ALB
+target_group = aws.lb.TargetGroup(
+    "supplychain-tg",
+    port=8000,
+    protocol="HTTP",
+    vpc_id=default_vpc.id,
+    target_type="ip",
+    health_check={
+        "enabled": True,
+        "healthy_threshold": 2,
+        "interval": 30,
+        "matcher": "200",
+        "path": "/",
+        "port": "traffic-port",
+        "protocol": "HTTP",
+        "timeout": 10,
+        "unhealthy_threshold": 3
+    }
 )
 
 listener = aws.lb.Listener(
@@ -68,13 +181,33 @@ listener = aws.lb.Listener(
     load_balancer_arn=alb.arn,
     port=80,
     default_actions=[{
-        "type": "fixed-response",
-        "fixedResponse": {
-            "contentType": "text/plain",
-            "messageBody": "Service running",
-            "statusCode": "200"
-        }
+        "type": "forward",
+        "target_group_arn": target_group.arn
     }]
 )
 
+# Create ECS service
+service = aws.ecs.Service(
+    "supplychain-service",
+    cluster=cluster.id,
+    task_definition=task_definition.arn,
+    desired_count=1,
+    launch_type="FARGATE",
+    health_check_grace_period_seconds=300,
+    network_configuration={
+        "assign_public_ip": True,
+        "subnets": aws.ec2.get_subnets().ids,
+        "security_groups": [ecs_security_group.id]
+    },
+    load_balancers=[{
+        "target_group_arn": target_group.arn,
+        "container_name": "fastapi",
+        "container_port": 8000
+    }],
+    opts=pulumi.ResourceOptions(depends_on=[listener])
+)
+
 pulumi.export("api_url", alb.dns_name)
+pulumi.export("target_group_arn", target_group.arn)
+pulumi.export("cluster_name", cluster.name)
+pulumi.export("service_name", service.name)

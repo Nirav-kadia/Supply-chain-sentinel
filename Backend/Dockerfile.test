@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy minimal requirements
+COPY requirements_minimal_test.txt .
+
+# Install minimal dependencies
+RUN pip install --no-cache-dir -r requirements_minimal_test.txt
+
+# Copy only the main app file for testing
+COPY app/main.py ./app/main.py
+COPY app/__init__.py ./app/__init__.py
+
+# Create empty modules to prevent import errors
+RUN mkdir -p app/core app/agents app/api && \
+    touch app/core/__init__.py app/agents/__init__.py app/api/__init__.py && \
+    echo "class GraphManager: pass" > app/core/graph_builder.py && \
+    echo "def run_adk_agent(*args): pass" > app/agents/adk_news_agent.py && \
+    echo "from fastapi import APIRouter; router = APIRouter()" > app/api/risk_analysis.py
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
