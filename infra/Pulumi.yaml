@@ -1,5 +1,5 @@
-name: supply-chain-sentinel-infra
-description: This is supply-chain-setinel-infra
+name: supply-chain-pulumi
+description: A minimal AWS Python Pulumi program
 runtime:
   name: python
   options:
