@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from app.core.graph_builder import GraphManager
 from fastapi import BackgroundTasks
 from app.agents.adk_news_agent import run_adk_agent
+from app.api.risk_analysis import router as risk_router
 
 app = FastAPI(title="SupplyChain Sentinel API")
 graph_db = GraphManager()
@@ -14,6 +15,7 @@ class ExtractedEntityRequest(BaseModel):
 
 @app.get("/")
 def health_check():
+    print("enteredddd..................")
     return {"status": "running"}
 
 @app.post("/entities")
@@ -50,3 +52,5 @@ async def analyze_supplier(
     }
 
 
+# app = FastAPI(title="SupplyChain Sentinel")
+app.include_router(risk_router)

@@ -1,0 +1,43 @@
+# Core FastAPI dependencies
+fastapi==0.123.10
+uvicorn==0.40.0
+python-multipart==0.0.21
+
+# CrewAI framework
+crewai==1.8.1
+crewai-tools==1.8.1
+
+# Database
+neo4j==6.1.0
+SQLAlchemy==2.0.46
+alembic==1.18.1
+
+# Google Cloud services (compatible versions)
+google-api-python-client==2.188.0
+google-cloud-aiplatform==1.134.0
+google-cloud-storage==3.8.0
+google-genai==1.60.0
+
+# Configuration and utilities
+pydantic==2.11.10
+pydantic-settings==2.10.1
+python-dotenv==1.1.1
+
+# HTTP client
+requests==2.32.5
+httpx==0.28.1
+
+# OpenTelemetry (pinned to compatible versions)
+opentelemetry-api==1.34.0
+opentelemetry-sdk==1.34.0
+
+# Authentication
+PyJWT==2.9.0
+
+# Other utilities
+python-dateutil==2.9.0.post0
+typer==0.21.1
+rich==14.2.0
+
+# Text processing
+rapidfuzz==3.14.3

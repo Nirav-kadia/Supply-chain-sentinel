@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.simple
+    image: backend-working:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
