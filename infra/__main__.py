@@ -124,12 +124,19 @@ alb_security_group = aws.ec2.SecurityGroup(
     ]
 )
 
+public_subnets = aws.ec2.get_subnets(
+    filters=[{
+        "name": "map-public-ip-on-launch",
+        "values": ["true"]
+    }]
+)
+
 alb = aws.lb.LoadBalancer(
     "supplychain-alb",
     internal=False,
     load_balancer_type="application",
     security_groups=[alb_security_group.id],
-    subnets=aws.ec2.get_subnets().ids
+    subnets=public_subnets.ids,
 )
 
 # Create security group for ECS tasks
@@ -197,7 +204,7 @@ service = aws.ecs.Service(
     health_check_grace_period_seconds=300,
     network_configuration={
         "assign_public_ip": True,
-        "subnets": aws.ec2.get_subnets().ids,
+        "subnets": public_subnets.ids,
         "security_groups": [ecs_security_group.id]
     },
     load_balancers=[{
