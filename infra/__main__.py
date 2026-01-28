@@ -18,20 +18,21 @@ cluster = aws.ecs.Cluster("supplychain-cluster")
 
 task_exec_role = aws.iam.Role(
     "ecsTaskExecutionRole",
-    assume_role_policy="""{
+    assume_role_policy=pulumi.Output.json_dumps({
         "Version": "2012-10-17",
         "Statement": [{
             "Effect": "Allow",
             "Principal": { "Service": "ecs-tasks.amazonaws.com" },
             "Action": "sts:AssumeRole"
         }]
-    }"""
+    })
 )
 
 aws.iam.RolePolicyAttachment(
     "ecsTaskExecutionRolePolicy",
     role=task_exec_role.name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+    policy_arn="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    opts=pulumi.ResourceOptions(depends_on=[task_exec_role])
 )
 
 # Create CloudWatch log group for ECS logs
